@@ -42,7 +42,7 @@ app.message(async ({ message, say }) => {
       filename: 'image.png',
       title: `Image for: "${prompt}"`,
       initial_comment: `Here is your image for: "${prompt}"`,
-      file: imageBuffer // ✅ Must be top-level Buffer
+      file: imageBuffer
     });
 
   } catch (err) {
