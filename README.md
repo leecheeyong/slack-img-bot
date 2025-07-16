@@ -3,7 +3,7 @@
 This is a simple Slack bot that lives in your **DMs** and does two creative things:
 
 > [!NOTE]
-> This bot only works when you send your message that starts with `mood` or `generate` in a DM with the bot 
+> This bot only functions when you send your message starting with `mood` or `generate` in a DM with the bot 
 
 1. **Moodboard Generator** – Send a message like `mood cozy cabin` and get a beautiful moodboard of images from Wikimedia Commons with a stylized title.
 2. **Text-to-Image Generator** – Send `generate a cat made of jelly` and get an AI-generated image using Hugging Face or DeepAI (via Puppeteer browser automation).
