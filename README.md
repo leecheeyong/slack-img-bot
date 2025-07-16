@@ -2,7 +2,7 @@
 
 This is a simple Slack bot that lives in your **DMs** and does two creative things:
 
-> [INFO]
+> [!NOTE]
 > This bot only works when you send your message that starts with `mood` or `generate` in a DM with the bot 
 
 1. **Moodboard Generator** – Send a message like `mood cozy cabin` and get a beautiful moodboard of images from Wikimedia Commons with a stylized title.
