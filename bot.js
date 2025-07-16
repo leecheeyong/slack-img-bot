@@ -4,6 +4,7 @@ import puppeteer from 'puppeteer';
 import pkg from '@slack/bolt';
 import fetch from 'node-fetch';
 import { Readable } from 'stream';
+import * as cheerio from 'cheerio';
 
 const { App } = pkg;
 
@@ -14,8 +15,73 @@ const app = new App({
 });
 
 const apis = [
-   // 'huggingface',
+    'huggingface',
      'deepai'];
+
+function generateMoodboardTitle(prompt) {
+  const styles = ['Dreams of', 'Vibes of', 'Aesthetic of', 'Echoes of', 'Moodboard:'];
+  const adjectives = ['Soft', 'Cyber', 'Retro', 'Noir', 'Electric', 'Cozy', 'Surreal'];
+  const randStyle = styles[Math.floor(Math.random() * styles.length)];
+  const randAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
+  return `${randStyle} ${randAdj} ${prompt.charAt(0).toUpperCase() + prompt.slice(1)}`;
+}
+
+async function searchImages(prompt, limit = 4) {
+  const searchUrl = `https://commons.wikimedia.org/w/index.php?search=${encodeURIComponent(
+    prompt
+  )}&title=Special:MediaSearch&go=Go&type=image`;
+  const res = await fetch(searchUrl);
+  const html = await res.text();
+  const $ = cheerio.load(html);
+
+  const imageUrls = [];
+  $('img').each((_, el) => {
+    const src = $(el).attr('src');
+    if (src && src.includes('/thumb/') && src.match(/\.(jpg|jpeg|png)$/)) {
+      const fullUrl = src
+        .replace(/\/thumb/, '')
+        .replace(/\/[^/]*$/, '')
+        .replace(/^\/\//, 'https://');
+      if (!imageUrls.includes(fullUrl)) {
+        imageUrls.push(fullUrl);
+      }
+    }
+  });
+
+  return imageUrls.slice(0, limit);
+}
+
+app.message(/^mood (.+)/i, async ({ message, say, client }) => {
+  if (message.channel_type !== 'im' || !message.text) return;
+  const prompt = message.text.match(/^mood (.+)/i)[1];
+
+  const title = generateMoodboardTitle(prompt);
+  await say(`🎨 *${title}*`);
+
+  try {
+    const imageUrls = await searchImages(prompt);
+
+    if (imageUrls.length === 0) {
+      await say("❌ Couldn't find relevant images. Try a different prompt!");
+      return;
+    }
+
+    for (const url of imageUrls) {
+      const res = await fetch(url);
+      const buffer = await res.buffer();
+
+      await client.files.uploadV2({
+        channel_id: message.channel,
+        filename: `mood-${Date.now()}.jpg`,
+        file: Readable.from(buffer),
+        title: prompt,
+      });
+    }
+  } catch (err) {
+    console.error('❌ Error:', err);
+    await say('⚠️ Oops! Something went wrong while generating your moodboard.');
+  }
+});
 
 async function generateWithHuggingFace(prompt) {
 const tokenList = process.env.HF_TOKEN.split(',');
@@ -51,24 +117,19 @@ async function generateWithDeepAI(prompt) {
       waitUntil: 'domcontentloaded',
     });
 
-    // Type the prompt into the textarea
     await page.waitForSelector('#generate-textarea', { visible: true });
     await page.type('#generate-textarea', prompt);
 
-    // Submit the form
     await page.click('#modelSubmitButton');
 
-    // Wait for the image to load and have a proper .jpg src
     await page.waitForFunction(() => {
       const img = document.querySelector('#main-image');
       return img && img.src && img.src.endsWith('.jpg');
     }, { timeout: 60000 });
 
-    // Extract the image URL
     const imageUrl = await page.$eval('#main-image', img => img.src);
     console.log('✅ DeepAI image URL:', imageUrl);
 
-    // Download the image as a buffer
     const response = await fetch(imageUrl);
     const buffer = Buffer.from(await response.arrayBuffer());
 
