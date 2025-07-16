@@ -1,6 +1,6 @@
 # slack-img-bot
 
-This is a simple Slack bot that lives in your DMs and does two creative things:
+This is a simple Slack bot that lives in your **DMs** and does two creative things:
 
 1. **Moodboard Generator** – Send a message like `mood cozy cabin` and get a beautiful moodboard of images from Wikimedia Commons with a stylized title.
 2. **Text-to-Image Generator** – Send `generate a cat made of jelly` and get an AI-generated image using Hugging Face or DeepAI (via Puppeteer browser automation).
